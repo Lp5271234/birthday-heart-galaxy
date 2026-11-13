@@ -179,9 +179,12 @@
     if (!scenes[name]) return;
     Object.entries(scenes).forEach(([sceneName, node]) => {
       const active = sceneName === name;
+      if (!active && node.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
       node.classList.toggle("is-active", active);
-      node.setAttribute("aria-hidden", String(!active));
       if ("inert" in node) node.inert = !active;
+      node.setAttribute("aria-hidden", String(!active));
     });
     state.currentScene = name;
     document.body.dataset.stage = name;
@@ -790,5 +793,6 @@
     init();
   }
 })();
+
 
 
