@@ -58,6 +58,8 @@
     cakeHint: $("cakeHint"),
     cakeStage: $("cakeStage"),
     cake: $("cake"),
+    cake3dHost: $("cake3dHost"),
+    blowCandleButton: $("blowCandleButton"),
     candles: $("candles"),
     skipToLetterButton: $("skipToLetterButton"),
     letterRecipient: $("letterRecipient"),
@@ -83,10 +85,13 @@
     started: false,
     currentScene: "intro",
     heartBuilt: false,
+    heartPrepared: false,
     heartCards: [],
     candles: [],
     blown: 0,
     celebrating: false,
+    cakePrepared: false,
+    mode3d: false,
     lastFocused: null
   };
 
@@ -111,12 +116,14 @@
     const theme = params.get("color") || params.get("theme");
     const photo = params.get("photo");
     const audio = params.get("audio");
+    const quality = params.get("quality");
 
     if (to) config.to = to.trim().slice(0, 40);
     if (from) config.from = from.trim().slice(0, 40);
     if (theme && isValidColor(theme)) config.theme.accent = theme;
     if (photo) config.photoUrl = photo;
     if (audio) config.audioUrl = audio;
+    if (quality) config.quality = quality.toLowerCase();
   }
 
   function applyConfig() {
@@ -187,6 +194,10 @@
       node.setAttribute("aria-hidden", String(!active));
     });
     state.currentScene = name;
+    if (window.Cake3D) {
+      if (name === "cake") window.Cake3D.resume();
+      else window.Cake3D.pause();
+    }
     document.body.dataset.stage = name;
     if (announce) el.liveStatus.textContent = announce;
   }
@@ -349,6 +360,8 @@
       this.width = 0;
       this.height = 0;
       this.dpr = 1;
+      this.lastFrame = 0;
+      this.frameInterval = 1000 / 30;
       this.resize = this.resize.bind(this);
       this.draw = this.draw.bind(this);
       this.onVisibility = this.onVisibility.bind(this);
@@ -362,13 +375,14 @@
     resize() {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
-      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const mobile = this.width < 700;
+      this.dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.5);
       this.canvas.width = Math.round(this.width * this.dpr);
       this.canvas.height = Math.round(this.height * this.dpr);
       this.canvas.style.width = `${this.width}px`;
       this.canvas.style.height = `${this.height}px`;
       this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-      const count = reducedMotion.matches ? 42 : Math.round(Math.min(160, Math.max(75, this.width / 8)));
+      const count = reducedMotion.matches ? 18 : (mobile ? 42 : Math.round(Math.min(105, Math.max(60, this.width / 12))));
       this.stars = Array.from({ length: count }, () => ({
         x: Math.random() * this.width,
         y: Math.random() * this.height,
@@ -390,6 +404,9 @@
     }
 
     draw(now) {
+      this.raf = requestAnimationFrame(this.draw);
+      if (now - this.lastFrame < this.frameInterval) return;
+      this.lastFrame = now;
       const elapsed = (now - this.loopStart) / 1000;
       this.ctx.clearRect(0, 0, this.width, this.height);
       this.ctx.globalCompositeOperation = "lighter";
@@ -414,7 +431,6 @@
       }
 
       this.ctx.globalCompositeOperation = "source-over";
-      this.raf = requestAnimationFrame(this.draw);
     }
   }
 
@@ -436,7 +452,7 @@
     resize() {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
-      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.dpr = Math.min(window.devicePixelRatio || 1, this.width < 700 ? 1.5 : 1.75);
       this.canvas.width = Math.round(this.width * this.dpr);
       this.canvas.height = Math.round(this.height * this.dpr);
       this.canvas.style.width = `${this.width}px`;
@@ -534,6 +550,7 @@
   const starfield = new Starfield(el.ambientCanvas);
   const effects = new Effects(el.effectCanvas);
   let heartResizeTimer = 0;
+  let cake3dModulePromise = null;
 
   function heartPoint(angle) {
     const x = 16 * Math.pow(Math.sin(angle), 3);
@@ -543,7 +560,8 @@
 
   function createHeartCards() {
     if (state.heartBuilt) return;
-    const total = Math.min(config.heartMessages.length, 42);
+    const maxCards = window.innerWidth < 700 ? 24 : 32;
+    const total = Math.min(config.heartMessages.length, maxCards);
     for (let i = 0; i < total; i += 1) {
       const slot = document.createElement("div");
       slot.className = "heart-slot";
@@ -586,7 +604,10 @@
 
   function showHeart() {
     createHeartCards();
-    layoutHeartCards();
+    if (!state.heartPrepared) {
+      layoutHeartCards();
+      state.heartPrepared = true;
+    }
     setScene("heart", "小窗正在拼成一颗爱心。");
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -603,15 +624,63 @@
     el.replayButton.hidden = false;
     sound.start();
     showHeart();
+    if (config.quality !== "low" && config.quality !== "css") loadCake3DModule();
   }
 
-  function enterCake() {
-    setScene("cake", "进入星河蛋糕，轻触蜡烛许愿。");
-    setupCandles();
-    if (!reducedMotion.matches) {
-      effects.burst(window.innerWidth * 0.5, window.innerHeight * 0.57, 24, 0.55);
+  function loadCake3DModule() {
+    if (window.Cake3D) return Promise.resolve(window.Cake3D);
+    if (!cake3dModulePromise) {
+      try {
+        const dynamicImport = new Function("return import('./cake3d.js?v=4')");
+        cake3dModulePromise = dynamicImport()
+          .then(() => window.Cake3D || null)
+          .catch(() => null);
+      } catch (error) {
+        cake3dModulePromise = Promise.resolve(null);
+      }
     }
-    window.setTimeout(() => state.candles[0]?.focus({ preventScroll: true }), 450);
+    return cake3dModulePromise;
+  }
+
+  function waitForCake3D(timeout = 5000) {
+    return Promise.race([
+      loadCake3DModule(),
+      new Promise((resolve) => window.setTimeout(() => resolve(null), timeout))
+    ]);
+  }
+
+  async function enterCake() {
+    if (state.cakePrepared) return;
+    state.cakePrepared = true;
+    setScene("cake", "进入 3D 星河蛋糕，拖动可以旋转。");
+    el.blowCandleButton.disabled = true;
+
+    const lowQuality = config.quality === "low" || config.quality === "css";
+    const cake3d = lowQuality ? null : await waitForCake3D();
+    let use3d = false;
+    if (cake3d && typeof cake3d.init === "function") {
+      use3d = await cake3d.init(el.cake3dHost, {
+        mobile: window.innerWidth < 700,
+        reducedMotion: reducedMotion.matches
+      });
+    }
+
+    state.mode3d = Boolean(use3d);
+    if (state.mode3d) {
+      el.cake.hidden = true;
+      el.cake3dHost.hidden = false;
+      el.cakeHint.textContent = "拖动旋转蛋糕，轻触蛋糕或按钮吹灭蜡烛";
+    } else {
+      el.cake3dHost.hidden = true;
+      el.cake.hidden = false;
+      setupCandles();
+      el.cakeHint.textContent = config.cakeHint;
+    }
+
+    el.blowCandleButton.disabled = false;
+    if (!reducedMotion.matches) {
+      effects.burst(window.innerWidth * 0.5, window.innerHeight * 0.57, 18, 0.45);
+    }
   }
 
   function setupCandles() {
@@ -665,7 +734,21 @@
     }
   }
 
+  function blow3DCandle() {
+    if (state.celebrating) return;
+    state.celebrating = true;
+    if (window.Cake3D) window.Cake3D.blow();
+    el.liveStatus.textContent = "蜡烛已吹灭，愿望正在升起。";
+    sound.chime();
+    effects.fireworkShow(2600);
+    window.setTimeout(() => revealLetter(true), reducedMotion.matches ? 450 : 1800);
+  }
+
   function blowAllCandles() {
+    if (state.mode3d) {
+      blow3DCandle();
+      return;
+    }
     state.candles.forEach((button, index) => {
       if (button.classList.contains("is-blown")) return;
       window.setTimeout(() => blowCandle(button), index * 85);
@@ -700,7 +783,6 @@
     setScene("letter", "生日贺卡已打开。");
     effects.fireworkShow(fromCandles ? 3000 : 2000);
     if (fromCandles) sound.chime();
-    window.setTimeout(() => el.againButton.focus({ preventScroll: true }), 650);
   }
 
   function resetExperience() {
@@ -767,6 +849,14 @@
   function bindEvents() {
     el.startButton.addEventListener("click", startExperience);
     el.toCakeButton.addEventListener("click", enterCake);
+    el.blowCandleButton.addEventListener("click", blowAllCandles);
+    el.cake3dHost.addEventListener("click", () => {
+      if (el.cake3dHost.dataset.dragged === "true") {
+        el.cake3dHost.dataset.dragged = "false";
+        return;
+      }
+      blowAllCandles();
+    });
     el.skipToLetterButton.addEventListener("click", () => revealLetter(false));
     el.againButton.addEventListener("click", resetExperience);
     el.replayButton.addEventListener("click", resetExperience);
@@ -780,11 +870,25 @@
     }, { passive: true });
   }
 
+  function prepareHeartIfIdle() {
+    const prepare = () => {
+      if (state.started || state.heartBuilt) return;
+      createHeartCards();
+      layoutHeartCards();
+      state.heartPrepared = true;
+    };
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(prepare, { timeout: 1200 });
+    } else {
+      window.setTimeout(prepare, 350);
+    }
+  }
   function init() {
     applyConfig();
     bindEvents();
     setupCakeDrag();
     setScene("intro", "轻触礼物，开启生日惊喜。");
+    prepareHeartIfIdle();
   }
 
   if (document.readyState === "loading") {
@@ -793,6 +897,25 @@
     init();
   }
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
