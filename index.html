@@ -11,7 +11,7 @@
   <meta property="og:description" content="轻触礼物，拆开这一份只属于你的生日祝福。">
   <meta property="og:type" content="website">
   <title>生日快乐｜给你的小惊喜</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
   <canvas id="ambientCanvas" aria-hidden="true"></canvas>
@@ -72,6 +72,7 @@
       </div>
 
       <div class="cake-stage" id="cakeStage">
+        <div id="cake3dHost" class="cake3d-host" aria-hidden="true"><span class="cake3d-loading" aria-label="3D 蛋糕加载中"></span></div>
         <div class="cake-aura" aria-hidden="true"></div>
         <div class="cake-orbit orbit-one" aria-hidden="true"></div>
         <div class="cake-orbit orbit-two" aria-hidden="true"></div>
@@ -97,7 +98,10 @@
         <figcaption id="memoryPhotoCaption"></figcaption>
       </figure>
 
-      <button id="skipToLetterButton" class="ghost-button" type="button">直接看信</button>
+      <div class="cake-actions">
+        <button id="blowCandleButton" class="primary-button" type="button">吹灭蜡烛</button>
+        <button id="skipToLetterButton" class="ghost-button" type="button">直接看信</button>
+      </div>
     </section>
 
     <section id="letterScene" class="scene" aria-labelledby="letterTitle">
@@ -116,10 +120,14 @@
   <p id="liveStatus" class="sr-only" aria-live="polite"></p>
   <noscript><p class="noscript">请开启 JavaScript 来查看这份生日惊喜。</p></noscript>
 
-  <script src="config.js"></script>
-  <script src="script.js"></script>
+  <script src="config.js?v=4"></script>
+  <script src="script.js?v=4"></script>
 </body>
 </html>
+
+
+
+
 
 
 
