@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#120b1d">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ctext y=%2750%27 font-size=%2748%27%3E%F0%9F%8E%82%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="一份写给你的生日惊喜。">
+  <meta property="og:title" content="生日快乐｜给你的小惊喜">
+  <meta property="og:description" content="轻触礼物，拆开这一份只属于你的生日祝福。">
+  <meta property="og:type" content="website">
+  <title>生日快乐｜给你的小惊喜</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="ambientCanvas" aria-hidden="true"></canvas>
+  <div class="aurora" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wordmark" aria-hidden="true">BIRTHDAY <span>♡</span></div>
+    <div class="topbar-actions">
+      <button id="soundToggle" class="icon-button" type="button" aria-label="播放背景音乐" aria-pressed="false" hidden>
+        <svg class="music-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3m10 3a3 3 0 1 1-3-3h3"/></svg>
+        <svg class="music-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3m10 3a3 3 0 1 1-3-3h3M3 3l18 18"/></svg>
+      </button>
+      <button id="replayButton" class="icon-button" type="button" aria-label="重新播放" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="experience">
+    <section id="introScene" class="scene is-active" aria-labelledby="introTitle">
+      <div class="intro-wrap">
+        <button id="startButton" class="gift-launch" type="button" aria-label="轻触礼物，开启生日惊喜">
+          <span class="orbit orbit-a" aria-hidden="true"></span>
+          <span class="orbit orbit-b" aria-hidden="true"></span>
+          <span class="orbit orbit-c" aria-hidden="true"></span>
+          <span class="gift-art" aria-hidden="true">
+            <span class="gift-glow"></span>
+            <span class="gift-lid"><span class="gift-bow bow-left"></span><span class="gift-bow bow-right"></span><span class="gift-knot"></span></span>
+            <span class="gift-box"><span class="gift-ribbon"></span><span class="gift-heart">♡</span></span>
+            <span class="gift-spark s1"></span><span class="gift-spark s2"></span><span class="gift-spark s3"></span>
+          </span>
+        </button>
+        <p class="intro-kicker">A LITTLE SURPRISE FOR YOU</p>
+        <h1 id="introTitle" class="intro-title">给 <span id="introRecipient">朋友</span> 的生日礼物</h1>
+        <p id="introHint" class="intro-hint">轻触礼物，开启惊喜</p>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"><span></span></div>
+    </section>
+
+    <section id="heartScene" class="scene" aria-labelledby="heartTitle">
+      <div class="heart-stage" id="heartStage">
+        <div id="heartCards" class="heart-cards" aria-hidden="true"></div>
+        <article id="heartCard" class="glass-card heart-card">
+          <p class="eyebrow">TO <span id="heartRecipient">朋友</span></p>
+          <h2 id="heartTitle">生日快乐 <span class="heart-mark">♡</span></h2>
+          <p id="heartSubtitle" class="heart-subtitle">愿你新的一岁，继续闪闪发光</p>
+          <button id="toCakeButton" class="primary-button" type="button">继续，去看蛋糕 <span aria-hidden="true">→</span></button>
+        </article>
+      </div>
+    </section>
+
+    <section id="cakeScene" class="scene" aria-labelledby="cakeTitle">
+      <div class="cake-copy">
+        <p class="eyebrow">MAKE A WISH</p>
+        <h2 id="cakeTitle">许个愿，然后吹灭蜡烛</h2>
+        <p id="cakeHint">轻触蜡烛，或者点一下蛋糕</p>
+      </div>
+
+      <div class="cake-stage" id="cakeStage">
+        <div class="cake-aura" aria-hidden="true"></div>
+        <div class="cake-orbit orbit-one" aria-hidden="true"></div>
+        <div class="cake-orbit orbit-two" aria-hidden="true"></div>
+        <div id="cake" class="cake">
+          <div class="cake-shadow" aria-hidden="true"></div>
+          <div class="cake-plate" aria-hidden="true"></div>
+          <div class="cake-layer layer-bottom" aria-hidden="true"></div>
+          <div class="cake-layer layer-middle" aria-hidden="true"></div>
+          <div class="cake-layer layer-top" aria-hidden="true">
+            <span class="frosting"></span>
+            <span class="sprinkle sp1"></span><span class="sprinkle sp2"></span><span class="sprinkle sp3"></span>
+            <span class="sprinkle sp4"></span><span class="sprinkle sp5"></span><span class="sprinkle sp6"></span>
+          </div>
+          <div id="candles" class="candles" aria-label="生日蜡烛"></div>
+          <div class="cake-stars" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </div>
+
+      <figure id="memoryPhoto" class="memory-photo" hidden>
+        <img id="memoryPhotoImage" alt="我们的合照">
+        <figcaption id="memoryPhotoCaption"></figcaption>
+      </figure>
+
+      <button id="skipToLetterButton" class="ghost-button" type="button">直接看信</button>
+    </section>
+
+    <section id="letterScene" class="scene" aria-labelledby="letterTitle">
+      <article class="glass-card letter-card">
+        <div class="letter-shine" aria-hidden="true"></div>
+        <p class="eyebrow">A LETTER FOR <span id="letterRecipient">朋友</span></p>
+        <h2 id="letterTitle">生日快乐</h2>
+        <div id="letterBody" class="letter-body"></div>
+        <p id="letterSignature" class="letter-signature"></p>
+        <button id="againButton" class="primary-button" type="button">再看一次 <span aria-hidden="true">↻</span></button>
+      </article>
+    </section>
+  </main>
+
+  <canvas id="effectCanvas" aria-hidden="true"></canvas>
+  <p id="liveStatus" class="sr-only" aria-live="polite"></p>
+  <noscript><p class="noscript">请开启 JavaScript 来查看这份生日惊喜。</p></noscript>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+
